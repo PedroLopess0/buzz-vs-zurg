@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Space Invaders Neon Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="arcade-wrapper">
+    <!-- ARCADE CABINET HEADER / HUD -->
+    <header class="game-hud">
+      <div class="hud-item score-box">
+        <span class="hud-label">SCORE</span>
+        <span id="scoreDisplay" class="hud-value neon-cyan">00000</span>
+      </div>
+
+      <div class="hud-item wave-box">
+        <span class="hud-label">WAVE</span>
+        <span id="waveDisplay" class="hud-value neon-gold">01</span>
+      </div>
+
+      <div class="hud-item highscore-box">
+        <span class="hud-label">HIGH SCORE</span>
+        <span id="highScoreDisplay" class="hud-value neon-magenta">00000</span>
+      </div>
+
+      <div class="hud-item lives-box">
+        <span class="hud-label">LIVES</span>
+        <div id="livesContainer" class="lives-icons">
+          <span class="life-icon">🚀</span>
+          <span class="life-icon">🚀</span>
+          <span class="life-icon">🚀</span>
+          <span class="life-icon">🚀</span>
+          <span class="life-icon">🚀</span>
+        </div>
+      </div>
+
+      <div class="hud-actions">
+        <button id="soundToggleBtn" class="hud-btn" title="Ligar/Desligar Som" aria-label="Som">
+          <span id="soundIcon">🔊</span>
+        </button>
+        <button id="pauseToggleBtn" class="hud-btn" title="Pausar Jogo (P)" aria-label="Pausa">
+          <span>⏸</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- GAME CANVAS CONTAINER -->
+    <main class="canvas-viewport" id="canvasViewport">
+      <canvas id="gameCanvas" width="800" height="700"></canvas>
+      
+      <!-- SCANLINE & CRT VIGNETTE EFFECT -->
+      <div class="crt-overlay"></div>
+
+      <!-- TELA INICIAL (START SCREEN) -->
+      <section id="startScreen" class="overlay-screen active">
+        <div class="screen-content">
+          <div class="neon-title-box">
+            <h1 class="neon-glitch-title" data-text="SPACE INVADERS">SPACE INVADERS</h1>
+            <span class="neon-subtitle">NEON ARCADE EDITION</span>
+          </div>
+
+          <div class="sprites-preview-card">
+            <div class="preview-item">
+              <span class="preview-label">SUA NAVE</span>
+              <div class="sprite-glow-frame">
+                <img id="previewPlayerImg" src="assets/buzz.png" alt="Nave Espacial" />
+              </div>
+              <label class="custom-sprite-btn">
+                Mudar Sprite
+                <input type="file" id="customPlayerInput" accept="image/*" />
+              </label>
+            </div>
+
+            <div class="vs-badge">VS</div>
+
+            <div class="preview-item">
+              <span class="preview-label">INVASOR VERDE</span>
+              <div class="sprite-glow-frame green">
+                <img id="previewAlienImg" src="assets/zurg.png" alt="Alienígena Verde" />
+              </div>
+              <label class="custom-sprite-btn green">
+                Mudar Sprite
+                <input type="file" id="customAlienInput" accept="image/*" />
+              </label>
+            </div>
+          </div>
+
+          <div class="controls-guide">
+            <div class="control-row">
+              <span class="key-badge">◀ ▶</span> ou <span class="key-badge">A</span> <span class="key-badge">D</span>
+              <span class="control-desc">Mover Nave</span>
+            </div>
+            <div class="control-row">
+              <span class="key-badge wide">ESPAÇO</span>
+              <span class="control-desc">Disparar Laser</span>
+            </div>
+            <div class="control-row">
+              <span class="key-badge">P</span>
+              <span class="control-desc">Pausar</span>
+            </div>
+            <div class="control-row mobile-only-text">
+              <span class="touch-hint">📱 Controles touch integrados na tela para celular!</span>
+            </div>
+          </div>
+
+          <button id="startGameBtn" class="arcade-btn primary-btn pulse-glow">
+            INICIAR MISSÃO
+          </button>
+        </div>
+      </section>
+
+      <!-- TELA DE PAUSA (PAUSE SCREEN) -->
+      <section id="pauseScreen" class="overlay-screen hidden">
+        <div class="screen-content">
+          <h2 class="neon-screen-title yellow">JOGO PAUSADO</h2>
+          <p class="pause-status">Sistemas em espera orbital</p>
+          <div class="menu-btn-group">
+            <button id="resumeGameBtn" class="arcade-btn primary-btn">
+              RETOMAR
+            </button>
+            <button id="restartFromPauseBtn" class="arcade-btn secondary-btn">
+              REINICIAR
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TELA DE TRANSIÇÃO DE WAVE -->
+      <section id="waveScreen" class="overlay-screen hidden">
+        <div class="screen-content">
+          <h2 class="neon-screen-title green" id="waveClearedTitle">WAVE CONCLUÍDA!</h2>
+          <p class="wave-bonus-text">BÔNUS DEFENSIVO: <span id="waveBonusPoints" class="neon-gold">+500 PTS</span></p>
+          <div class="loading-wave-bar">
+            <div class="loading-wave-fill" id="waveLoadingFill"></div>
+          </div>
+          <p class="wave-next-hint">PREPARAR PARA PRÓXIMA ONDA...</p>
+        </div>
+      </section>
+
+      <!-- TELA DE GAME OVER -->
+      <section id="gameOverScreen" class="overlay-screen hidden">
+        <div class="screen-content">
+          <h2 class="neon-screen-title red glitch">GAME OVER</h2>
+          <div class="final-stats-card">
+            <div class="stat-line">
+              <span>PONTUAÇÃO FINAL:</span>
+              <span id="finalScoreDisplay" class="neon-cyan">00000</span>
+            </div>
+            <div class="stat-line">
+              <span>WAVE ALCANÇADA:</span>
+              <span id="finalWaveDisplay" class="neon-gold">01</span>
+            </div>
+            <div id="newHighScoreBadge" class="new-record-badge hidden">
+              ★ NOVO RECORDE ALCANÇADO! ★
+            </div>
+          </div>
+          <button id="restartGameBtn" class="arcade-btn primary-btn pulse-glow">
+            JOGAR NOVAMENTE
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- CONTROLES TOUCH PARA MOBILE -->
+    <footer class="touch-controls" id="touchControls">
+      <div class="touch-dpad">
+        <button id="touchLeftBtn" class="touch-btn dpad-btn" aria-label="Mover para esquerda">
+          <span>◀</span>
+        </button>
+        <button id="touchRightBtn" class="touch-btn dpad-btn" aria-label="Mover para direita">
+          <span>▶</span>
+        </button>
+      </div>
+
+      <div class="touch-actions">
+        <button id="touchShootBtn" class="touch-btn shoot-btn" aria-label="Atirar laser">
+          <span>FIRE</span>
+          <span class="shoot-glow-ring"></span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
